@@ -1,6 +1,7 @@
 package com.example.yuxia.coolweather;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -19,6 +20,7 @@ import android.widget.Toast;
 import com.example.yuxia.coolweather.db.City;
 import com.example.yuxia.coolweather.db.County;
 import com.example.yuxia.coolweather.db.Province;
+import com.example.yuxia.coolweather.gson.Weather;
 import com.example.yuxia.coolweather.util.HttpUtil;
 import com.example.yuxia.coolweather.util.Utility;
 
@@ -88,6 +90,12 @@ public class ChooseAreaFragment extends Fragment {
                 }else if(currentLevel == LEVEL_CITY){
                     selectedCity = cityList.get(position);
                     queryCounties();
+                }else{
+                    String weatherId = countyList.get(position).getWeatherId();
+                    Intent intent = new Intent(getActivity(), WeatherAcitivity.class);
+                    intent.putExtra("weather_id", weatherId);
+                    startActivity(intent);
+                    getActivity().finish();
                 }
             }
         });
