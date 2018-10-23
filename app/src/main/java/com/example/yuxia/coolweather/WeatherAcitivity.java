@@ -2,10 +2,14 @@ package com.example.yuxia.coolweather;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -49,6 +53,14 @@ public class WeatherAcitivity extends AppCompatActivity {
 
     private TextView sportText;
 
+    public SwipeRefreshLayout swipeRefreshLayout;
+
+    private String mWeatherId;
+
+    public DrawerLayout drawerLayout;
+
+    private Button navButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,18 +77,35 @@ public class WeatherAcitivity extends AppCompatActivity {
         comfortText = (TextView) findViewById(R.id.comfort_text);
         carWashText = (TextView) findViewById(R.id.car_wash__text);
         sportText = (TextView) findViewById(R.id.sport_text);
+        navButton = (Button) findViewById(R.id.nav_button);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
+        swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = prefs.getString("weather", null);
         if(weatherString != null){
             //Have cashe parse the weather data directly
             Weather weather  = Utility.handleWeatherResponse(weatherString);
+            mWeatherId = weather.basic.weatherId;
             showWeatherInfo(weather);
         }else{
             //No Cache, use http to request weather info
-            String weatherId = getIntent().getStringExtra("weather_id");
+            mWeatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
-            requestWeather(weatherId);
+            requestWeather(mWeatherId);
         }
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestWeather(mWeatherId);
+            }
+        });
+        navButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
     }
 
     public void requestWeather(final String weatherId){
@@ -89,6 +118,7 @@ public class WeatherAcitivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(WeatherAcitivity.this, "Weather data request failed", Toast.LENGTH_SHORT).show();
+                        swipeRefreshLayout.setRefreshing(false);
                     }
                 });
             }
@@ -104,10 +134,12 @@ public class WeatherAcitivity extends AppCompatActivity {
                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherAcitivity.this).edit();
                             editor.putString("weather", responseText);
                             editor.apply();
+                            mWeatherId = weather.basic.weatherId;
                             showWeatherInfo(weather);
                         }else{
                             Toast.makeText(WeatherAcitivity.this, "Weather data request failed", Toast.LENGTH_SHORT).show();
                         }
+                        swipeRefreshLayout.setRefreshing(false);
                     }
                 });
             }
